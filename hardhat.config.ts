@@ -32,6 +32,7 @@ import arbitrumBridgedUsdcGoerliRelationConfigMap from './deployments/arbitrum-g
 import arbitrumGoerliNativeUsdcRelationConfigMap from './deployments/arbitrum-goerli/usdc/relations';
 import baseUsdbcRelationConfigMap from './deployments/base/usdbc/relations';
 import baseWethRelationConfigMap from './deployments/base/weth/relations';
+import baseUsdcRelationConfigMap from './deployments/base/usdc/relations';
 import baseGoerliRelationConfigMap from './deployments/base-goerli/usdc/relations';
 import baseGoerliWethRelationConfigMap from './deployments/base-goerli/weth/relations';
 import lineaGoerliRelationConfigMap from './deployments/linea-goerli/usdc/relations';
@@ -256,6 +257,7 @@ const config: HardhatUserConfig = {
       // Linea
       'linea-goerli': LINEASCAN_KEY,
       optimism: OPTIMISMSCAN_KEY,
+      optimisticEthereum: OPTIMISMSCAN_KEY,
     },
     customChains: [
       {
@@ -342,6 +344,7 @@ const config: HardhatUserConfig = {
       base: {
         usdbc: baseUsdbcRelationConfigMap,
         weth: baseWethRelationConfigMap,
+        usdc: baseUsdcRelationConfigMap
       },
       'base-goerli': {
         usdc: baseGoerliRelationConfigMap,
@@ -446,7 +449,13 @@ const config: HardhatUserConfig = {
         name: 'base-weth',
         network: 'base',
         deployment: 'weth',
-        auxiliaryBase: 'mainnet',
+        auxiliaryBase: 'mainnet'
+      },
+      {
+        name: 'base-usdc',
+        network: 'base',
+        deployment: 'usdc',
+        auxiliaryBase: 'mainnet'
       },
       {
         name: 'base-goerli',
