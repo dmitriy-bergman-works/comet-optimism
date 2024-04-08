@@ -1,0 +1,214 @@
+diff --git a/.github/workflows/run-scenarios.yaml b/.github/workflows/run-scenarios.yaml
+index 8acd648..af76d40 100644
+--- a/.github/workflows/run-scenarios.yaml
++++ b/.github/workflows/run-scenarios.yaml
+@@ -7,7 +7,7 @@ jobs:
+     strategy:
+       fail-fast: false
+       matrix:
+-        bases: [ development, mainnet, mainnet-weth, goerli, goerli-weth, sepolia-usdc, sepolia-weth, fuji, mumbai, polygon, arbitrum-usdc.e, arbitrum-usdc, arbitrum-goerli-usdc, arbitrum-goerli-usdc.e, base-usdbc, base-weth, base-usdc, base-goerli, base-goerli-weth, linea-goerli, scroll-goerli, scroll-usdc]
++        bases: [ development, mainnet, mainnet-weth, mainnet-weth-lrt, goerli, goerli-weth, sepolia-usdc, sepolia-weth, fuji, mumbai, polygon, arbitrum-usdc.e, arbitrum-usdc, arbitrum-goerli-usdc, arbitrum-goerli-usdc.e, base-usdbc, base-weth, base-usdc, base-goerli, base-goerli-weth, linea-goerli, scroll-goerli, scroll-usdc]
+     name: Run scenarios
+     env:
+       ETHERSCAN_KEY: ${{ secrets.ETHERSCAN_KEY }}
+diff --git a/deployments/mainnet/usdc/roots.json b/deployments/mainnet/usdc/roots.json
+index 996d96b..2cf6a33 100644
+--- a/deployments/mainnet/usdc/roots.json
++++ b/deployments/mainnet/usdc/roots.json
+@@ -6,8 +6,8 @@
+     "bulker": "0xa397a8C2086C554B531c02E29f3291c9704B00c7",
+     "fxRoot": "0xfe5e5D361b2ad62c541bAb87C45a0B9B018389a2",
+     "arbitrumInbox": "0x4Dbd4fc535Ac27206064B68FfCf827b0A60BAB3f",
+-    "arbitrumL1GatewayRouter": "0x72Ce9c846789fdB6fC1f34aC4AD25Dd9ef7031ef", 
+-    "CCTPTokenMessenger": "0xbd3fa81b58ba92a82136038b25adec7066af3155", 
++    "arbitrumL1GatewayRouter": "0x72Ce9c846789fdB6fC1f34aC4AD25Dd9ef7031ef",
++    "CCTPTokenMessenger": "0xbd3fa81b58ba92a82136038b25adec7066af3155",
+     "CCTPMessageTransmitter": "0x0a992d191deec32afe36203ad87d7d289a738f81",
+     "baseL1CrossDomainMessenger": "0x866E82a600A1414e583f7F13623F1aC5d58b0Afa",
+     "baseL1StandardBridge": "0x3154Cf16ccdb4C6d922629664174b904d80F2C35",
+diff --git a/deployments/mainnet/weth-lrt/configuration.json b/deployments/mainnet/weth-lrt/configuration.json
+new file mode 100644
+index 0000000..83729cc
+--- /dev/null
++++ b/deployments/mainnet/weth-lrt/configuration.json
+@@ -0,0 +1,40 @@
++{
++  "name": "Compound LRT",
++  "symbol": "cLRTv3",
++  "baseToken": "WETH",
++  "baseTokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
++  "borrowMin": "0.1e18",
++  "governor": "0x6d903f6003cca6255d85cca4d3b5e5146dc33925",
++  "pauseGuardian": "0xbbf3f1421d886e9b2c5d716b5192ac998af2012c",
++  "storeFrontPriceFactor": 0.5,
++  "targetReserves": "5000e18",
++  "baseTokenPriceFeed": "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
++  "rates": {
++    "supplyKink": 0.9,
++    "supplySlopeLow": 0.02,
++    "supplySlopeHigh": 1,
++    "supplyBase": 0,
++    "borrowKink": 0.9,
++    "borrowSlopeLow": 0.0235,
++    "borrowSlopeHigh": 1,
++    "borrowBase": 0.005
++  },
++  "tracking": {
++    "indexScale": "1e15",
++    "baseSupplySpeed": "0e15",
++    "baseBorrowSpeed": "0e15",
++    "baseMinForRewards": "1000e18"
++  },
++  "rewardTokenAddress": "0xc00e94cb662c3520282e6f5717214004a7f26888",
++  "assets": {
++    "ezETH": {
++      "address": "0xbf5495Efe5DB9ce00f80364C8B423567e58d2110",
++      "decimals": "18",
++      "priceFeed": "0x636A000262F6aA9e1F094ABF0aD8f645C44f641C",
++      "borrowCF": 0.8,
++      "liquidateCF": 0.85,
++      "liquidationFactor": 0.9,
++      "supplyCap": "0e18"
++    }
++  }
++}
+diff --git a/deployments/mainnet/weth-lrt/deploy.ts b/deployments/mainnet/weth-lrt/deploy.ts
+new file mode 100644
+index 0000000..2af9fb7
+--- /dev/null
++++ b/deployments/mainnet/weth-lrt/deploy.ts
+@@ -0,0 +1,29 @@
++import { Deployed, DeploymentManager } from '../../../plugins/deployment_manager';
++import { DeploySpec, deployComet, exp } from '../../../src/deploy';
++
++export default async function deploy(deploymentManager: DeploymentManager, deploySpec: DeploySpec): Promise<Deployed> {
++  const ezETH = await deploymentManager.existing('ezETH', '0x1e756B7bCca7B26FB9D85344B3525F5559bbacb0');
++
++  // Deploy scaling price feed for cbETH
++  const ezETHScalingPriceFeed = await deploymentManager.deploy(
++    'ezETH:priceFeed',
++    'pricefeeds/ScalingPriceFeed.sol',
++    [
++      '0x636A000262F6aA9e1F094ABF0aD8f645C44f641C', // ezETH / ETH price feed
++      8                                             // decimals
++    ]
++  );
++
++  const cometAdmin = await deploymentManager.fromDep('cometAdmin', 'mainnet', 'usdc');
++  const cometFactory = await deploymentManager.fromDep('cometFactory', 'mainnet', 'usdc');
++  const $configuratorImpl = await deploymentManager.fromDep('configurator:implementation', 'mainnet', 'usdc');
++  const configurator = await deploymentManager.fromDep('configurator', 'mainnet', 'usdc');
++  const rewards = await deploymentManager.fromDep('rewards', 'mainnet', 'usdc');
++  const bulker = await deploymentManager.fromDep('bulker', 'mainnet', 'usdc'); // 0xa397a8C2086C554B531c02E29f3291c9704B00c7
++  const localTimelock = await deploymentManager.fromDep('timelock', 'mainnet', 'usdc');
++  // Deploy all Comet-related contracts
++  const deployed = await deployComet(deploymentManager, deploySpec);
++  const { comet } = deployed;
++
++  return { ...deployed, bulker };
++}
+diff --git a/deployments/mainnet/weth-lrt/relations.ts b/deployments/mainnet/weth-lrt/relations.ts
+new file mode 100644
+index 0000000..3e73484
+--- /dev/null
++++ b/deployments/mainnet/weth-lrt/relations.ts
+@@ -0,0 +1,24 @@
++import { RelationConfigMap } from '../../../plugins/deployment_manager/RelationConfig';
++import baseRelationConfig from '../../relations';
++
++export default {
++  ...baseRelationConfig,
++  // '0xbf5495Efe5DB9ce00f80364C8B423567e58d2110': {
++  //   artifact: 'contracts/ERC20.sol:ERC20',
++  //   delegates: {
++  //     field: {
++  //       slot: '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc'
++  //     }
++  //   },
++    '0xbf5495Efe5DB9ce00f80364C8B423567e58d2110': {
++      artifact: 'contracts/ERC20.sol:ERC20',
++      delegates: {
++        field: {
++          slot: '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc'
++        }
++      }
++  },
++  'AppProxyUpgradeable': {
++    artifact: 'contracts/ERC20.sol:ERC20',
++  }
++};
+diff --git a/hardhat.config.ts b/hardhat.config.ts
+index 3b17994..8cd8366 100644
+--- a/hardhat.config.ts
++++ b/hardhat.config.ts
+@@ -25,6 +25,7 @@ import sepoliaWethRelationConfigMap from './deployments/sepolia/weth/relations';
+ import mumbaiRelationConfigMap from './deployments/mumbai/usdc/relations';
+ import mainnetRelationConfigMap from './deployments/mainnet/usdc/relations';
+ import mainnetWethRelationConfigMap from './deployments/mainnet/weth/relations';
++import mainnetWethLrtRelationConfigMap from './deployments/mainnet/weth-lrt/relations';
+ import polygonRelationConfigMap from './deployments/polygon/usdc/relations';
+ import arbitrumBridgedUsdcRelationConfigMap from './deployments/arbitrum/usdc.e/relations';
+ import arbitrumNativeUsdcRelationConfigMap from './deployments/arbitrum/usdc/relations';
+@@ -337,7 +338,8 @@ const config: HardhatUserConfig = {
+       },
+       mainnet: {
+         usdc: mainnetRelationConfigMap,
+-        weth: mainnetWethRelationConfigMap
++        weth: mainnetWethRelationConfigMap,
++        'weth-lrt': mainnetWethLrtRelationConfigMap
+       },
+       polygon: {
+         usdc: polygonRelationConfigMap
+@@ -384,6 +386,11 @@ const config: HardhatUserConfig = {
+         network: 'mainnet',
+         deployment: 'weth',
+       },
++      {
++        name: 'mainnet-weth-lrt',
++        network: 'mainnet',
++        deployment: 'weth-lrt',
++      },
+       {
+         name: 'development',
+         network: 'hardhat',
+diff --git a/scenario/GovernanceScenario.ts b/scenario/GovernanceScenario.ts
+index 1b54885..05dcb0b 100644
+--- a/scenario/GovernanceScenario.ts
++++ b/scenario/GovernanceScenario.ts
+@@ -18,6 +18,7 @@ scenario('upgrade Comet implementation and initialize', {filter: async (ctx) =>
+   // 1. Set the new factory address in Configurator
+   // 2. Deploy and upgrade to the new implementation of Comet
+   // 3. Call initialize(address) on the new version of Comet
++  console.log('x')
+   const setFactoryCalldata = utils.defaultAbiCoder.encode(['address', 'address'], [comet.address, cometModifiedFactory.address]);
+   const deployAndUpgradeToCalldata = utils.defaultAbiCoder.encode(['address', 'address'], [configurator.address, comet.address]);
+   const initializeCalldata = utils.defaultAbiCoder.encode(['address'], [constants.AddressZero]);
+@@ -27,7 +28,7 @@ scenario('upgrade Comet implementation and initialize', {filter: async (ctx) =>
+     ['setFactory(address,address)', 'deployAndUpgradeTo(address,address)', 'initialize(address)'],
+     [setFactoryCalldata, deployAndUpgradeToCalldata, initializeCalldata]
+   );
+-
++  console.log('xxx')
+   // LiquidatorPoints.numAbsorbs for address ZERO should now be set as UInt32.MAX
+   expect((await comet.liquidatorPoints(constants.AddressZero)).numAbsorbs).to.be.equal(2 ** 32 - 1);
+ });
+diff --git a/src/deploy/Network.ts b/src/deploy/Network.ts
+index 9f6f027..c820a89 100644
+--- a/src/deploy/Network.ts
++++ b/src/deploy/Network.ts
+@@ -259,8 +259,13 @@ export async function deployNetworkComet(
+       trace(await wait(configurator.connect(admin).setConfiguration(comet.address, configuration)));
+ 
+       trace(`Upgrading implementation of Comet...`);
+-      trace(await wait(cometAdmin.connect(admin).deployAndUpgradeTo(configurator.address, comet.address)));
+-
++      console.log(1, {cometAdmin, admin, configuratorAddress: configurator.address, cometAddress: comet.address})
++      const connectAdmin = cometAdmin.connect(admin)
++      console.log({owner1: await connectAdmin.owner()})
++      console.log({owner11: await cometAdmin.owner()})
++      console.log(3, {connectAdmin})
++      trace(await wait(connectAdmin.deployAndUpgradeTo(configurator.address, comet.address)));
++      console.log(2)
+       trace(`New Comet implementation at ${await cometAdmin.getProxyImplementation(comet.address)}`);
+     }
+   );

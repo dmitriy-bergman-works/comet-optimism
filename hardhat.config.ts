@@ -25,6 +25,7 @@ import sepoliaWethRelationConfigMap from './deployments/sepolia/weth/relations';
 import mumbaiRelationConfigMap from './deployments/mumbai/usdc/relations';
 import mainnetRelationConfigMap from './deployments/mainnet/usdc/relations';
 import mainnetWethRelationConfigMap from './deployments/mainnet/weth/relations';
+import mainnetWethLrtRelationConfigMap from './deployments/mainnet/weth-lrt/relations';
 import polygonRelationConfigMap from './deployments/polygon/usdc/relations';
 import arbitrumBridgedUsdcRelationConfigMap from './deployments/arbitrum/usdc.e/relations';
 import arbitrumNativeUsdcRelationConfigMap from './deployments/arbitrum/usdc/relations';
@@ -110,7 +111,8 @@ const networkConfigs: NetworkConfig[] = [
   {
     network: 'base',
     chainId: 8453,
-    url: `https://clean-spring-wind.base-mainnet.discover.quiknode.pro/${QUICKNODE_KEY}`,
+    // url: `https://clean-spring-wind.base-mainnet.discover.quiknode.pro/${QUICKNODE_KEY}`,
+    url: `https://sleek-muddy-shape.base-mainnet.quiknode.pro/${QUICKNODE_KEY}`,
   },
   {
     network: 'arbitrum',
@@ -337,7 +339,8 @@ const config: HardhatUserConfig = {
       },
       mainnet: {
         usdc: mainnetRelationConfigMap,
-        weth: mainnetWethRelationConfigMap
+        weth: mainnetWethRelationConfigMap,
+        'weth-lrt': mainnetWethLrtRelationConfigMap
       },
       polygon: {
         usdc: polygonRelationConfigMap
@@ -383,6 +386,11 @@ const config: HardhatUserConfig = {
         name: 'mainnet-weth',
         network: 'mainnet',
         deployment: 'weth',
+      },
+      {
+        name: 'mainnet-weth-lrt',
+        network: 'mainnet',
+        deployment: 'weth-lrt',
       },
       {
         name: 'development',

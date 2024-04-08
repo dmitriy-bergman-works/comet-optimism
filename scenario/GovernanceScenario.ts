@@ -18,6 +18,7 @@ scenario('upgrade Comet implementation and initialize', {filter: async (ctx) => 
   // 1. Set the new factory address in Configurator
   // 2. Deploy and upgrade to the new implementation of Comet
   // 3. Call initialize(address) on the new version of Comet
+  console.log('x')
   const setFactoryCalldata = utils.defaultAbiCoder.encode(['address', 'address'], [comet.address, cometModifiedFactory.address]);
   const deployAndUpgradeToCalldata = utils.defaultAbiCoder.encode(['address', 'address'], [configurator.address, comet.address]);
   const initializeCalldata = utils.defaultAbiCoder.encode(['address'], [constants.AddressZero]);
@@ -27,7 +28,7 @@ scenario('upgrade Comet implementation and initialize', {filter: async (ctx) => 
     ['setFactory(address,address)', 'deployAndUpgradeTo(address,address)', 'initialize(address)'],
     [setFactoryCalldata, deployAndUpgradeToCalldata, initializeCalldata]
   );
-
+  console.log('xxx')
   // LiquidatorPoints.numAbsorbs for address ZERO should now be set as UInt32.MAX
   expect((await comet.liquidatorPoints(constants.AddressZero)).numAbsorbs).to.be.equal(2 ** 32 - 1);
 });

@@ -24,6 +24,11 @@ scenario(
     const baseAssetAddress = await comet.baseToken();
     const baseAsset = context.getAssetByAddress(baseAssetAddress);
     const baseScale = (await comet.baseScale()).toBigInt();
+    // console.log('we are here')
+    const numAssets = await comet.numAssets()
+    // console.log({numAssets})
+    // console.log({comet})
+    // console.log({comet: await comet.getAssetInfo(0)})
     const { asset: collateralAssetAddress, scale: scaleBN } = await comet.getAssetInfo(0);
     const collateralAsset = context.getAssetByAddress(collateralAssetAddress);
     const collateralScale = scaleBN.toBigInt();
