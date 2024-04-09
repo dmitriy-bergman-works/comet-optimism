@@ -13,6 +13,7 @@ scenario.only('upgrade governor', {}, async ({ comet, configurator, timelock, ac
   console.log({3: (await configurator.getConfiguration(comet.address))})
   console.log({4: (await configurator.getConfiguration(comet.address)).governor})
   console.log({5: configurator.address})
+  console.log({6: comet.address})
   
   
   expect(await comet.governor()).to.equal(timelock.address);

@@ -271,6 +271,11 @@ export async function deployNetworkComet(
   console.log('configurator', configurator.address) // 0x316f9708bB98af7dA9c68C1C3b5e79039cD336E3
   // Also get a handle for Comet, although it may not *actually* support the interface yet
   const comet = await deploymentManager.cast(cometProxy.address, 'contracts/CometInterface.sol:CometInterface');
+
+  console.log({2: await configurator.getConfiguration(comet.address), 22: configurator.address, 222: comet.address})
+  console.log({23: configuratorProxy})
+  console.log({3: await configuratorProxy.getConfiguration(comet.address), 33: configurator.address, 333: comet.address})
+  console.log({4: await configuratorImpl.getConfiguration(comet.address), 44: configurator.address, 444: comet.address})
   // console.log({XXX: await configuratorImpl.getConfiguration(comet.address)})
   // console.log({gole1: await configuratorProxy.getConfiguration(comet.address)})
   // console.log({gole: await configurator.getConfiguration(comet.address)})

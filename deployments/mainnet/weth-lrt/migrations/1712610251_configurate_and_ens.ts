@@ -1,6 +1,6 @@
 import { DeploymentManager } from '../../../../plugins/deployment_manager/DeploymentManager';
 import { migration } from '../../../../plugins/deployment_manager/Migration';
-
+import { calldata, exp, getConfigurationStruct, proposal } from '../../../../src/deploy';
 // const ENSName = 'compound-community-licenses.eth';
 // const ENSResolverAddress = '0x4976fb03C32e5B8cfe2b6cCB31c09Ba78EBaBa41';
 // const ENSRegistryAddress = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
@@ -13,6 +13,8 @@ import { migration } from '../../../../plugins/deployment_manager/Migration';
 
 // const cUSDTAddress = '0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9';
 
+const COMPAddress = '0xc00e94cb662c3520282e6f5717214004a7f26888';
+
 export default migration('1675200105_configurate_and_ens', {
   prepare: async (deploymentManager: DeploymentManager) => {
     console.log('WTF1')
@@ -21,6 +23,83 @@ export default migration('1675200105_configurate_and_ens', {
 
   enact: async (deploymentManager: DeploymentManager, govDeploymentManager: DeploymentManager) => {
     console.log('WTF2')
+    const trace = deploymentManager.tracer();
+    const ethers = deploymentManager.hre.ethers;
+
+    const comptrollerV2 = await deploymentManager.fromDep('comptrollerV2', 'mainnet', 'usdc');
+    const cometFactory = await deploymentManager.fromDep('cometFactory', 'mainnet', 'usdc');
+    const {
+      governor,
+      comet,
+      configurator,
+      cometAdmin,
+      rewards,
+      WETH,
+      ezETH
+    } = await deploymentManager.getContracts();
+
+    const configuration = await getConfigurationStruct(deploymentManager);
+
+    const actions = [
+      // 2. Set the factory in the Configurator
+      {
+        contract: configurator,
+        signature: 'setFactory(address,address)',
+        args: [comet.address, cometFactory.address],
+      },
+
+      // 3. Set the configuration in the Configurator
+      {
+        contract: configurator,
+        signature: 'setConfiguration(address,(address,address,address,address,address,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint104,uint104,uint104,(address,address,uint8,uint64,uint64,uint64,uint128)[]))',
+        args: [comet.address, configuration],
+      },
+
+      // 4. Deploy and upgrade to a new version of Comet
+      {
+        contract: cometAdmin,
+        signature: "deployAndUpgradeTo(address,address)",
+        args: [configurator.address, comet.address],
+      },
+
+      // 5. Set the rewards configuration to COMP
+      {
+        contract: rewards,
+        signature: "setRewardConfig(address,address)",
+        args: [comet.address, COMPAddress],
+      },
+
+      // 6. Wrap some ETH as WETH
+      {
+        contract: WETH,
+        signature: "deposit()",
+        args: [],
+        value: 358052565869157684316n, // 500e18 - current balance
+      },
+
+      // 7. Send all Timelock's WETH to Comet to seed reserves
+      {
+        contract: WETH,
+        signature: "transfer(address,uint256)",
+        args: [comet.address, exp(500, 18)],
+      },
+
+      // 8. Transfer COMP
+      {
+        contract: comptrollerV2,
+        signature: '_grantComp(address,uint256)',
+        args: [rewards.address, exp(25_000, 18)],
+      },
+    ];
+    const description = "# Initialize LRT";
+    const txn = await deploymentManager.retry(
+      async () => trace((await governor.propose(...await proposal(actions, description))))
+    );
+
+    const event = txn.events.find(event => event.event === 'ProposalCreated');
+    const [proposalId] = event.args;
+
+    trace(`Created proposal ${proposalId}.`);
     // const trace = deploymentManager.tracer();
     // const ethers = deploymentManager.hre.ethers;
     // const { utils } = ethers;
