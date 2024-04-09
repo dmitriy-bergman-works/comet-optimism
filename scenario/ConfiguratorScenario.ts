@@ -4,7 +4,7 @@ import { expect } from 'chai';
 
 
 //
-scenario.only('upgrade governor', {}, async ({ comet, configurator, timelock, actors }, context) => {
+scenario('upgrade governor', {}, async ({ comet, configurator, timelock, actors }, context) => {
   const { admin, albert } = actors;
 
   console.log({admin, albert})
