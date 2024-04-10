@@ -67,9 +67,11 @@ export class CometBalanceConstraint<T extends CometContext, R extends Requiremen
             const cometBalance = (await comet.collateralBalanceOf(actor.address, asset.address)).toBigInt();
             const decimals = await asset.token.decimals();
             const toTransfer = getToTransferAmount(amount, cometBalance, decimals);
+            console.log({actor, amount, cometBalance, decimals, toTransfer})
             if (toTransfer > 0) {
               // Case: Supply asset
               // 1. Source tokens to user
+              console.log({toTransfer, 1: asset.address, 2: actor.address})
               await context.sourceTokens(toTransfer, asset.address, actor.address);
               // 2. Supply tokens to Comet
               // Note: but will interest rates cause supply/borrow to not exactly match the desired amount?

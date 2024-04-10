@@ -255,6 +255,7 @@ export class CometContext {
   }
 
   async sourceTokens(amount: number | bigint, asset: CometAsset | string, recipient: AddressLike) {
+    console.log('NEEDED',{ amount: amount.toString(), asset, recipient})
     const { world } = this;
     const recipientAddress = resolveAddress(recipient);
     const cometAsset = typeof asset === 'string' ? this.getAssetByAddress(asset) : asset;
@@ -281,6 +282,13 @@ export class CometContext {
     if (amountRemaining != 0n) {
       // Source from logs (expensive, in terms of node API limits)
       debug('Source Tokens: sourcing from logs...', amountRemaining, cometAsset.address);
+      console.log({
+        // dm: this.world.deploymentManager,
+        amount: amountRemaining,
+        asset: cometAsset.address,
+        address: recipientAddress,
+        blacklist: [comet.address],
+      })
       await sourceTokens({
         dm: this.world.deploymentManager,
         amount: amountRemaining,

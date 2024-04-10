@@ -2,8 +2,8 @@ import { Deployed, DeploymentManager } from '../../../plugins/deployment_manager
 import { DeploySpec, deployComet, exp } from '../../../src/deploy';
 
 export default async function deploy(deploymentManager: DeploymentManager, deploySpec: DeploySpec): Promise<Deployed> {
-  const ezETH = await deploymentManager.existing('ezETH', '0x1e756B7bCca7B26FB9D85344B3525F5559bbacb0');
-  // const ezETH = await deploymentManager.existing('ezETH', '0xbf5495Efe5DB9ce00f80364C8B423567e58d2110');
+  // const ezETH = await deploymentManager.existing('ezETH', '0x1e756B7bCca7B26FB9D85344B3525F5559bbacb0');
+  const ezETH = await deploymentManager.existing('ezETH', '0xbf5495Efe5DB9ce00f80364C8B423567e58d2110');
   // const WETH = await deploymentManager.existing('WETH', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2');
 
   // Deploy scaling price feed for cbETH

@@ -8,6 +8,7 @@
   "storeFrontPriceFactor": 0.5,
   "targetReserves": "5000e18",
   "baseTokenPriceFeed": "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
+  "governor": "0x6d903f6003cca6255d85cca4d3b5e5146dc33925",
   "rates": {
     "supplyKink": 0.9,
     "supplySlopeLow": 0.02,
