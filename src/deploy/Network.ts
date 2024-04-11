@@ -264,9 +264,9 @@ export async function deployNetworkComet(
     async () => {
       trace(`Setting configuration in Configurator for ${comet.address} (${isTmpImpl})`);
       trace(await wait(configurator.connect(admin).setConfiguration(comet.address, configuration)));
-      
+
       trace(`Upgrading implementation of Comet...`);
-      const connectAdmin = cometAdmin.connect(admin)
+      const connectAdmin = cometAdmin.connect(admin);
       trace(await wait(connectAdmin.deployAndUpgradeTo(configurator.address, comet.address)));
       trace(`New Comet implementation at ${await cometAdmin.getProxyImplementation(comet.address)}`);
     }
