@@ -260,7 +260,7 @@ export async function deployNetworkComet(
 
       trace(`Upgrading implementation of Comet...`);
       trace(await wait(cometAdmin.connect(admin).deployAndUpgradeTo(configurator.address, comet.address)));
-      
+
       trace(`New Comet implementation at ${await cometAdmin.getProxyImplementation(comet.address)}`);
     }
   );
