@@ -5,10 +5,11 @@ import { expectBase, isRewardSupported, isBulkerSupported, getExpectedBaseBalanc
 import { exp } from '../test/helpers';
 
 // XXX properly handle cases where asset0 is WETH
-scenario.skip(
+scenario.only(
   'Comet#bulker > (non-WETH base) all non-reward actions in one txn',
   {
-    filter: async (ctx) => await isBulkerSupported(ctx) && !matchesDeployment(ctx, [{deployment: 'weth'}, {network: 'mumbai'}, { network: 'linea-goerli' }]),
+    filter: async (ctx) =>
+      await isBulkerSupported(ctx) && !matchesDeployment(ctx, [{deployment: 'weth'}, {network: 'mumbai'}, { network: 'linea-goerli' }, {deployment: 'weth-lrt', network: 'mainnet'}]),
     supplyCaps: {
       $asset0: 3000,
       $asset1: 3000,
@@ -25,10 +26,10 @@ scenario.skip(
     const baseAsset = context.getAssetByAddress(baseAssetAddress);
     const baseScale = (await comet.baseScale()).toBigInt();
     // console.log('we are here')
-    const numAssets = await comet.numAssets()
-    // console.log({numAssets})
+    const numAssets = await comet.numAssets();
+    console.log({numAssets});
     // console.log({comet})
-    // console.log({comet: await comet.getAssetInfo(0)})
+    console.log({comet: await comet.getAssetInfo(0)});
     const { asset: collateralAssetAddress, scale: scaleBN } = await comet.getAssetInfo(0);
     const collateralAsset = context.getAssetByAddress(collateralAssetAddress);
     const collateralScale = scaleBN.toBigInt();
@@ -164,7 +165,7 @@ scenario(
 );
 
 // XXX properly handle cases where asset0 is WETH
-scenario(
+scenario.only(
   'Comet#bulker > (non-WETH base) all actions in one txn',
   {
     filter: async (ctx) => await isBulkerSupported(ctx) && await isRewardSupported(ctx) && !matchesDeployment(ctx, [{deployment: 'weth'}, { network: 'linea-goerli' }]),
