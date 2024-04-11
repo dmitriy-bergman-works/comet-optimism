@@ -2,7 +2,6 @@ import { scenario } from './context/CometContext';
 import { expectRevertCustom } from './utils';
 import { expect } from 'chai';
 
-
 scenario('upgrade governor', {}, async ({ comet, configurator, timelock, actors }, context) => {
   const { admin, albert } = actors;
 

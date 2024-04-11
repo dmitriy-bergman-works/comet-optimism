@@ -97,10 +97,8 @@ export class Runner<T, U, R> {
       //  a forker could be added back to the env if needed to support that
       let ctx: T = await env.initializer(world);
 
-
       try {
         // apply each solution in the combo, then check they all still hold
-        let i = 0;
         for (const solution of combo) {
           ctx = (await solution(ctx, world)) || ctx;
         }

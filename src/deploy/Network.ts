@@ -178,7 +178,6 @@ export async function deployNetworkComet(
     assetConfigs,
   };
 
-
   const tmpCometImpl = await deploymentManager.deploy(
     'comet:implementation',
     'Comet.sol',
@@ -198,8 +197,6 @@ export async function deployNetworkComet(
     [],
     maybeForce(deploySpec.cometMain)
   );
-
-  // console.log('configuratorImpl', configuratorImpl.address) // 0xcFC1fA6b7ca982176529899D99af6473aD80DF4F
 
   // If we deploy a new proxy, we initialize it to the current/new impl
   // If its an existing proxy, the impl we got for the alias must already be current
@@ -244,7 +241,6 @@ export async function deployNetworkComet(
   // Get the current impl addresses for the proxies, and determine if we've configurated
   const $configuratorImpl = await cometAdmin.getProxyImplementation(configurator.address);
   const $cometImpl = await cometAdmin.getProxyImplementation(comet.address);
-
   const isTmpImpl = sameAddress($cometImpl, tmpCometImpl.address);
   // Note: these next setup steps may require a follow-up proposal to complete, if we cannot admin here
   await deploymentManager.idempotent(
@@ -268,6 +264,7 @@ export async function deployNetworkComet(
     async () => {
       trace(`Setting configuration in Configurator for ${comet.address} (${isTmpImpl})`);
       trace(await wait(configurator.connect(admin).setConfiguration(comet.address, configuration)));
+      
       trace(`Upgrading implementation of Comet...`);
       const connectAdmin = cometAdmin.connect(admin)
       trace(await wait(connectAdmin.deployAndUpgradeTo(configurator.address, comet.address)));

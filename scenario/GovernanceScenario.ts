@@ -27,6 +27,7 @@ scenario('upgrade Comet implementation and initialize', {filter: async (ctx) => 
     ['setFactory(address,address)', 'deployAndUpgradeTo(address,address)', 'initialize(address)'],
     [setFactoryCalldata, deployAndUpgradeToCalldata, initializeCalldata]
   );
+
   // LiquidatorPoints.numAbsorbs for address ZERO should now be set as UInt32.MAX
   expect((await comet.liquidatorPoints(constants.AddressZero)).numAbsorbs).to.be.equal(2 ** 32 - 1);
 });
