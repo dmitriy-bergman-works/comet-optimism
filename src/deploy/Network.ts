@@ -91,15 +91,8 @@ export async function deployNetworkComet(
 
   const ethers = deploymentManager.hre.ethers;
 
-  const mainet_deployer_address = "0x6d903f6003cca6255D85CcA4D3B5E5146dC33925";
-  await deploymentManager.hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [mainet_deployer_address],
-  });
-  const mainnet_deployer = await ethers.getSigner(mainet_deployer_address);
-
   const trace = deploymentManager.tracer();
-  const admin = adminSigner ?? mainnet_deployer ?? await deploymentManager.getSigner();
+  const admin = adminSigner ?? await deploymentManager.getSigner();
 
   const {
     name,
