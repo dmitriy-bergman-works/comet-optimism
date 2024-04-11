@@ -128,6 +128,7 @@ export async function deployNetworkComet(
   } = await getConfiguration(deploymentManager, configOverrides);
 
   /* Deploy contracts */
+
   const cometAdmin = await deploymentManager.deploy(
     'cometAdmin',
     'CometProxyAdmin.sol',
@@ -139,7 +140,6 @@ export async function deployNetworkComet(
     name32: ethers.utils.formatBytes32String(name),
     symbol32: ethers.utils.formatBytes32String(symbol)
   };
-
   const cometExt = await deploymentManager.deploy(
     'comet:implementation:implementation',
     'CometExt.sol',
@@ -178,8 +178,6 @@ export async function deployNetworkComet(
     assetConfigs,
   };
 
-  // console.log({configuration})
-  // console.log('tmpCometImpl')
 
   const tmpCometImpl = await deploymentManager.deploy(
     'comet:implementation',
@@ -187,21 +185,12 @@ export async function deployNetworkComet(
     [configuration],
     maybeForce(),
   );
-
-  // console.log('tmpCometImpl')
-
-  // console.log('before proxy deploy')
-
-  // console.log('cometProxy')
   const cometProxy = await deploymentManager.deploy(
     'comet',
     'vendor/proxy/transparent/TransparentUpgradeableProxy.sol',
     [tmpCometImpl.address, cometAdmin.address, []], // NB: temporary implementation contract
     maybeForce(),
   );
-
-  // console.log('cometProxy')
-  // console.log('configuratorImpl')
 
   const configuratorImpl = await deploymentManager.deploy(
     'configurator:implementation',
@@ -215,15 +204,12 @@ export async function deployNetworkComet(
   // If we deploy a new proxy, we initialize it to the current/new impl
   // If its an existing proxy, the impl we got for the alias must already be current
   // In other words, we shan't have deployed an impl in the last step unless there was no proxy too
-  // console.log('configuratorProxy', configuratorImpl.address, cometAdmin.address, (await configuratorImpl.populateTransaction.initialize(admin.address)).data) // 0x316f9708bB98af7dA9c68C1C3b5e79039cD336E3
   const configuratorProxy = await deploymentManager.deploy(
     'configurator',
     'ConfiguratorProxy.sol',
     [configuratorImpl.address, cometAdmin.address, (await configuratorImpl.populateTransaction.initialize(admin.address)).data],
     maybeForce()
   );
-
-  // console.log('configuratorProxy', configuratorProxy.address)
 
   const rewards = await deploymentManager.deploy(
     'rewards',
@@ -237,7 +223,6 @@ export async function deployNetworkComet(
   // Now configure the configurator and actually deploy comet
   // Note: the success of these calls is dependent on who the admin is and if/when its been transferred
   //  scenarios can pass in an impersonated signer, but real deploys may require proposals for some states
-  // console.log('configurator')
   const configurator = configuratorImpl.attach(configuratorProxy.address);
 
   // Also get a handle for Comet, although it may not *actually* support the interface yet
@@ -260,7 +245,6 @@ export async function deployNetworkComet(
   const $configuratorImpl = await cometAdmin.getProxyImplementation(configurator.address);
   const $cometImpl = await cometAdmin.getProxyImplementation(comet.address);
 
-  // console.log({$configuratorImpl, $cometImpl})
   const isTmpImpl = sameAddress($cometImpl, tmpCometImpl.address);
   // Note: these next setup steps may require a follow-up proposal to complete, if we cannot admin here
   await deploymentManager.idempotent(
@@ -280,9 +264,7 @@ export async function deployNetworkComet(
   );
 
   await deploymentManager.idempotent(
-    async () => {
-      return amAdmin && (isTmpImpl || deploySpec.all || deploySpec.cometMain || deploySpec.cometExt)
-    },
+    async () => amAdmin && (isTmpImpl || deploySpec.all || deploySpec.cometMain || deploySpec.cometExt),
     async () => {
       trace(`Setting configuration in Configurator for ${comet.address} (${isTmpImpl})`);
       trace(await wait(configurator.connect(admin).setConfiguration(comet.address, configuration)));

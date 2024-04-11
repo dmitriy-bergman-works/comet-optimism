@@ -97,49 +97,25 @@ export class Runner<T, U, R> {
       //  a forker could be added back to the env if needed to support that
       let ctx: T = await env.initializer(world);
 
-      // console.log({combo, ctx});
 
       try {
         // apply each solution in the combo, then check they all still hold
-        let i = 0
+        let i = 0;
         for (const solution of combo) {
           ctx = (await solution(ctx, world)) || ctx;
-          // console.log({i, ctx: {
-          //   world: {
-          //     base: (ctx as any).world.base,
-          //     deploymentManager: (ctx as any).world.deploymentManager,
-          //     snapshotDeploymentManager: (ctx as any).world.snapshotDeploymentManager
-          //   },
-          //   actors: {
-          //     admin: (ctx as any).actors.admin,
-          //     pauseGuardian: (ctx as any).actors.pauseGuardian,
-          //     albert: (ctx as any).actors.albert,
-          //     betty: (ctx as any).actors.betty,
-          //     charles: (ctx as any).actors.charles,
-          //     signer: (ctx as any).actors.signer,
-          //   },
-          //   assets: { WETH: (ctx as any).assets.WETH, ezETH: (ctx as any).assets.ezETH, COMP: (ctx as any).assets.COMP }
-          // }})
-          i+=1;
         }
 
         for (const constraint of constraints) {
-          // console.log({1: scenario.requirements, ctx, world})
           await constraint.check(scenario.requirements, ctx, world);
         }
 
-        // console.log('after')
-
         // requirements met, run the property
         let txnReceipt = await scenario.property(await env.transformer(ctx), ctx, world);
-        // console.log({txnReceipt})
         if (txnReceipt) {
           cumulativeGas += txnReceipt.cumulativeGasUsed.toNumber();
-          // console.log({cumulativeGas})
         }
         numSolutionSets++;
       } catch (e) {
-        console.log('here', {e})
         // TODO: Include the specific solution (set of states) that failed in the result
         return this.generateResult(base, scenario, startTime, 0, ++numSolutionSets, e);
       } finally {
@@ -217,7 +193,6 @@ export async function runScenarios(bases: ForkSpec[]) {
         console.log(`[${base.name}] Running ${scenario.name} ...`);
         try {
           const result = await runner.run(scenario, context), N = result.numSolutionSets;
-          // console.log({result, scenario, context, N})
           if (N) {
             console.log(`[${base.name}] ... ran ${scenario.name}`);
             console.log(`[${base.name}]  ⛽ consumed ${result.gasUsed} gas on average over ${pluralize(N, 'solution', 'solutions')}`);

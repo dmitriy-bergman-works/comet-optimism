@@ -3,19 +3,9 @@ import { expectRevertCustom } from './utils';
 import { expect } from 'chai';
 
 
-//
 scenario('upgrade governor', {}, async ({ comet, configurator, timelock, actors }, context) => {
   const { admin, albert } = actors;
 
-  console.log({admin, albert})
-  console.log({1: await comet.governor()})
-  console.log({2: timelock.address})
-  console.log({3: (await configurator.getConfiguration(comet.address))})
-  console.log({4: (await configurator.getConfiguration(comet.address)).governor})
-  console.log({5: configurator.address})
-  console.log({6: comet.address})
-  
-  
   expect(await comet.governor()).to.equal(timelock.address);
   expect((await configurator.getConfiguration(comet.address)).governor).to.equal(timelock.address);
 

@@ -745,7 +745,7 @@ scenario(
     },
   };
 
-  scenario.only(
+  scenario(
     `LiquidationBot > reverts when price slippage is too high`,
     {
       upgrade: {
@@ -797,6 +797,7 @@ scenario(
 
       const baseToken = await comet.baseToken();
       const { asset: collateralAssetAddress } = await comet.getAssetInfo(0);
+
       const initialRecipientBalance = await betty.getErc20Balance(baseToken);
       const [initialNumAbsorbs, initialNumAbsorbed] = await comet.liquidatorPoints(betty.address);
 

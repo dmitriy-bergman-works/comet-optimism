@@ -301,13 +301,9 @@ scenario(
   },
   async ({ comet, actors }, context) => {
     const { albert } = actors;
-    console.log('before')
     const { asset: asset0Address, scale: scaleBN } = await comet.getAssetInfo(0);
-    console.log({asset0Address, scaleBN})
     const collateralAsset = context.getAssetByAddress(asset0Address);
-    console.log({collateralAsset})
     const scale = scaleBN.toBigInt();
-    console.log({scale})
 
     await expectRevertCustom(
       albert.withdrawAsset({
