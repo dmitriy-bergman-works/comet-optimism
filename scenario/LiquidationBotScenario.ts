@@ -733,17 +733,19 @@ scenario(
   const baseTokenBalances = {
     mainnet: {
       usdc: 2250000,
-      weth: 20
+      weth: 20,
+      'weth-lrt': 1
     },
   };
   const assetAmounts = {
     mainnet: {
       usdc: ' == 5000', // COMP
       weth: ' == 10000', // CB_ETH
+      'weth-lrt': ' == 100' // EZ_ETH
     },
   };
 
-  scenario(
+  scenario.only(
     `LiquidationBot > reverts when price slippage is too high`,
     {
       upgrade: {
@@ -792,20 +794,24 @@ scenario(
           weth9
         ]
       ) as OnChainLiquidator;
+      console.log('12');
 
       const baseToken = await comet.baseToken();
       const { asset: collateralAssetAddress } = await comet.getAssetInfo(0);
-
+      console.log('123');
       const initialRecipientBalance = await betty.getErc20Balance(baseToken);
       const [initialNumAbsorbs, initialNumAbsorbed] = await comet.liquidatorPoints(betty.address);
+      console.log('1234');
 
       const borrowCapacity = await borrowCapacityForAsset(comet, albert, 0);
       const borrowAmount = (borrowCapacity.mul(90n)).div(100n);
+      console.log('12345');
 
       await albert.withdrawAsset({
         asset: baseToken,
         amount: borrowAmount
       });
+      console.log('123456');
 
       await world.increaseTime(
         await timeUntilUnderwater({
@@ -814,8 +820,10 @@ scenario(
           fudgeFactor: 60n * 10n // 10 minutes past when position is underwater
         })
       );
+      console.log('1234567');
 
       await comet.connect(betty.signer).accrueAccount(albert.address); // force accrue
+      console.log('12345678');
 
       expect(await comet.isLiquidatable(albert.address)).to.be.true;
       expect(await comet.collateralBalanceOf(albert.address, collateralAssetAddress)).to.be.greaterThan(0);

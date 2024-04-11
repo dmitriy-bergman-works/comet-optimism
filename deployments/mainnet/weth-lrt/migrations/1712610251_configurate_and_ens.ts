@@ -15,91 +15,92 @@ import { calldata, exp, getConfigurationStruct, proposal } from '../../../../src
 
 const COMPAddress = '0xc00e94cb662c3520282e6f5717214004a7f26888';
 
-export default migration('1675200105_configurate_and_ens', {
+export default migration('1712610251_configurate_and_ens', {
   prepare: async (deploymentManager: DeploymentManager) => {
-    console.log('WTF1')
+    console.log('WTF1');
     return {};
   },
 
   enact: async (deploymentManager: DeploymentManager, govDeploymentManager: DeploymentManager) => {
-    console.log('WTF2')
-    const trace = deploymentManager.tracer();
-    const ethers = deploymentManager.hre.ethers;
+    console.log('WTF2');
+    // const trace = deploymentManager.tracer();
+    // const ethers = deploymentManager.hre.ethers;
 
-    const comptrollerV2 = await deploymentManager.fromDep('comptrollerV2', 'mainnet', 'usdc');
-    const cometFactory = await deploymentManager.fromDep('cometFactory', 'mainnet', 'usdc');
-    const {
-      governor,
-      comet,
-      configurator,
-      cometAdmin,
-      rewards,
-      WETH,
-      ezETH
-    } = await deploymentManager.getContracts();
+    // const comptrollerV2 = await deploymentManager.fromDep('comptrollerV2', 'mainnet', 'usdc');
+    // const cometFactory = await deploymentManager.fromDep('cometFactory', 'mainnet', 'usdc');
+    // const {
+    //   governor,
+    //   comet,
+    //   configurator,
+    //   cometAdmin,
+    //   rewards,
+    //   WETH,
+    //   ezETH
+    // } = await deploymentManager.getContracts();
 
-    const configuration = await getConfigurationStruct(deploymentManager);
+    // const configuration = await getConfigurationStruct(deploymentManager);
 
-    const actions = [
-      // 2. Set the factory in the Configurator
-      {
-        contract: configurator,
-        signature: 'setFactory(address,address)',
-        args: [comet.address, cometFactory.address],
-      },
+    // const actions = [
+    //   // 2. Set the factory in the Configurator
+    //   {
+    //     contract: configurator,
+    //     signature: 'setFactory(address,address)',
+    //     args: [comet.address, cometFactory.address],
+    //   },
 
-      // 3. Set the configuration in the Configurator
-      {
-        contract: configurator,
-        signature: 'setConfiguration(address,(address,address,address,address,address,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint104,uint104,uint104,(address,address,uint8,uint64,uint64,uint64,uint128)[]))',
-        args: [comet.address, configuration],
-      },
+    //   // 3. Set the configuration in the Configurator
+    //   {
+    //     contract: configurator,
+    //     signature: 'setConfiguration(address,(address,address,address,address,address,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint64,uint104,uint104,uint104,(address,address,uint8,uint64,uint64,uint64,uint128)[]))',
+    //     args: [comet.address, configuration],
+    //   },
 
-      // 4. Deploy and upgrade to a new version of Comet
-      {
-        contract: cometAdmin,
-        signature: "deployAndUpgradeTo(address,address)",
-        args: [configurator.address, comet.address],
-      },
+    //   // 4. Deploy and upgrade to a new version of Comet
+    //   {
+    //     contract: cometAdmin,
+    //     signature: 'deployAndUpgradeTo(address,address)',
+    //     args: [configurator.address, comet.address],
+    //   },
 
-      // 5. Set the rewards configuration to COMP
-      {
-        contract: rewards,
-        signature: "setRewardConfig(address,address)",
-        args: [comet.address, COMPAddress],
-      },
+    //   // 5. Set the rewards configuration to COMP
+    //   {
+    //     contract: rewards,
+    //     signature: 'setRewardConfig(address,address)',
+    //     args: [comet.address, COMPAddress],
+    //   },
 
-      // 6. Wrap some ETH as WETH
-      {
-        contract: WETH,
-        signature: "deposit()",
-        args: [],
-        value: 358052565869157684316n, // 500e18 - current balance
-      },
+    //   // 6. Wrap some ETH as WETH
+    //   {
+    //     contract: WETH,
+    //     signature: 'deposit()',
+    //     args: [],
+    //     value: 358052565869157684316n, // 500e18 - current balance
+    //   },
 
-      // 7. Send all Timelock's WETH to Comet to seed reserves
-      {
-        contract: WETH,
-        signature: "transfer(address,uint256)",
-        args: [comet.address, exp(500, 18)],
-      },
+    //   // 7. Send all Timelock's WETH to Comet to seed reserves
+    //   {
+    //     contract: WETH,
+    //     signature: 'transfer(address,uint256)',
+    //     args: [comet.address, exp(500, 18)],
+    //   },
 
-      // 8. Transfer COMP
-      {
-        contract: comptrollerV2,
-        signature: '_grantComp(address,uint256)',
-        args: [rewards.address, exp(25_000, 18)],
-      },
-    ];
-    const description = "# Initialize LRT";
-    const txn = await deploymentManager.retry(
-      async () => trace((await governor.propose(...await proposal(actions, description))))
-    );
+    //   // 8. Transfer COMP
+    //   {
+    //     contract: comptrollerV2,
+    //     signature: '_grantComp(address,uint256)',
+    //     args: [rewards.address, exp(25_000, 18)],
+    //   },
+    // ];
+    // console.log('Start proposal');
+    // const description = '# Initialize LRT';
+    // const txn = await deploymentManager.retry(
+    //   async () => trace((await governor.propose(...await proposal(actions, description))))
+    // );
 
-    const event = txn.events.find(event => event.event === 'ProposalCreated');
-    const [proposalId] = event.args;
+    // const event = txn.events.find(event => event.event === 'ProposalCreated');
+    // const [proposalId] = event.args;
 
-    trace(`Created proposal ${proposalId}.`);
+    // trace(`Created proposal ${proposalId}.`);
     // const trace = deploymentManager.tracer();
     // const ethers = deploymentManager.hre.ethers;
     // const { utils } = ethers;
@@ -265,77 +266,77 @@ export default migration('1675200105_configurate_and_ens', {
   },
 
   async enacted(deploymentManager: DeploymentManager): Promise<boolean> {
-    console.log('WTF3')
+    console.log('WTF3');
     return true;
   },
 
   async verify(deploymentManager: DeploymentManager, govDeploymentManager: DeploymentManager) {
-    console.log('WTF4')
-  //   const ethers = deploymentManager.hre.ethers;
+    console.log('WTF4');
+    //   const ethers = deploymentManager.hre.ethers;
 
-  //   const {
-  //     comet,
-  //     rewards,
-  //     WBTC,
-  //     WETH,
-  //     WMATIC
-  //   } = await deploymentManager.getContracts();
+    //   const {
+    //     comet,
+    //     rewards,
+    //     WBTC,
+    //     WETH,
+    //     WMATIC
+    //   } = await deploymentManager.getContracts();
 
-  //   const {
-  //     timelock,
-  //     comptrollerV2,
-  //   } = await govDeploymentManager.getContracts();
+    //   const {
+    //     timelock,
+    //     comptrollerV2,
+    //   } = await govDeploymentManager.getContracts();
 
-  //   // 1.
-  //   const wbtcInfo = await comet.getAssetInfoByAddress(WBTC.address);
-  //   const wethInfo = await comet.getAssetInfoByAddress(WETH.address);
-  //   const wmaticInfo = await comet.getAssetInfoByAddress(WMATIC.address);
-  //   expect(wbtcInfo.supplyCap).to.be.eq(exp(400, 8));
-  //   expect(wethInfo.supplyCap).to.be.eq(exp(11_000, 18));
-  //   expect(wmaticInfo.supplyCap).to.be.eq(exp(10_000_000, 18));
-  //   expect(await comet.pauseGuardian()).to.be.eq('0x8Ab717CAC3CbC4934E63825B88442F5810aAF6e5');
+    //   // 1.
+    //   const wbtcInfo = await comet.getAssetInfoByAddress(WBTC.address);
+    //   const wethInfo = await comet.getAssetInfoByAddress(WETH.address);
+    //   const wmaticInfo = await comet.getAssetInfoByAddress(WMATIC.address);
+    //   expect(wbtcInfo.supplyCap).to.be.eq(exp(400, 8));
+    //   expect(wethInfo.supplyCap).to.be.eq(exp(11_000, 18));
+    //   expect(wmaticInfo.supplyCap).to.be.eq(exp(10_000_000, 18));
+    //   expect(await comet.pauseGuardian()).to.be.eq('0x8Ab717CAC3CbC4934E63825B88442F5810aAF6e5');
 
-  //   // 2. & 3.
-  //   expect(await comet.getReserves()).to.be.equal(exp(10_000, 6));
+    //   // 2. & 3.
+    //   expect(await comet.getReserves()).to.be.equal(exp(10_000, 6));
 
-  //   // 4. & 5.
-  //   const polygonCOMP = new Contract(
-  //     '0x8505b9d2254A7Ae468c0E9dd10Ccea3A837aef5c',
-  //     ['function balanceOf(address account) external view returns (uint256)'],
-  //     deploymentManager.hre.ethers.provider
-  //   );
-  //   expect(await polygonCOMP.balanceOf(rewards.address)).to.be.equal(exp(2_500, 18));
+    //   // 4. & 5.
+    //   const polygonCOMP = new Contract(
+    //     '0x8505b9d2254A7Ae468c0E9dd10Ccea3A837aef5c',
+    //     ['function balanceOf(address account) external view returns (uint256)'],
+    //     deploymentManager.hre.ethers.provider
+    //   );
+    //   expect(await polygonCOMP.balanceOf(rewards.address)).to.be.equal(exp(2_500, 18));
 
-  //   // 6. & 7.
-  //   const ENSResolver = await govDeploymentManager.existing('ENSResolver', ENSResolverAddress);
-  //   const ENSRegistry = await govDeploymentManager.existing('ENSRegistry', ENSRegistryAddress);
-  //   const nameHash = ethers.utils.namehash(ENSName);
-  //   const subdomainHash = ethers.utils.namehash(ENSSubdomain);
-  //   const officialMarketsJSON = await ENSResolver.text(subdomainHash, ENSTextRecordKey);
-  //   const officialMarkets = JSON.parse(officialMarketsJSON);
-  //   expect(await ENSRegistry.recordExists(subdomainHash)).to.be.equal(true);
-  //   expect(await ENSRegistry.owner(subdomainHash)).to.be.equal(timelock.address);
-  //   expect(await ENSRegistry.resolver(subdomainHash)).to.be.equal(ENSResolverAddress);
-  //   expect(await ENSRegistry.ttl(subdomainHash)).to.be.equal(0);
-  //   expect(officialMarkets).to.deep.equal({
-  //     1: [
-  //       {
-  //         baseSymbol: 'USDC',
-  //         cometAddress: '0xc3d688B66703497DAA19211EEdff47f25384cdc3',
-  //       },
-  //       {
-  //         baseSymbol: 'WETH',
-  //         cometAddress: '0xA17581A9E3356d9A858b789D68B4d866e593aE94',
-  //       },
-  //     ],
+    //   // 6. & 7.
+    //   const ENSResolver = await govDeploymentManager.existing('ENSResolver', ENSResolverAddress);
+    //   const ENSRegistry = await govDeploymentManager.existing('ENSRegistry', ENSRegistryAddress);
+    //   const nameHash = ethers.utils.namehash(ENSName);
+    //   const subdomainHash = ethers.utils.namehash(ENSSubdomain);
+    //   const officialMarketsJSON = await ENSResolver.text(subdomainHash, ENSTextRecordKey);
+    //   const officialMarkets = JSON.parse(officialMarketsJSON);
+    //   expect(await ENSRegistry.recordExists(subdomainHash)).to.be.equal(true);
+    //   expect(await ENSRegistry.owner(subdomainHash)).to.be.equal(timelock.address);
+    //   expect(await ENSRegistry.resolver(subdomainHash)).to.be.equal(ENSResolverAddress);
+    //   expect(await ENSRegistry.ttl(subdomainHash)).to.be.equal(0);
+    //   expect(officialMarkets).to.deep.equal({
+    //     1: [
+    //       {
+    //         baseSymbol: 'USDC',
+    //         cometAddress: '0xc3d688B66703497DAA19211EEdff47f25384cdc3',
+    //       },
+    //       {
+    //         baseSymbol: 'WETH',
+    //         cometAddress: '0xA17581A9E3356d9A858b789D68B4d866e593aE94',
+    //       },
+    //     ],
 
-  //     137: [
-  //       {
-  //         baseSymbol: 'USDC',
-  //         cometAddress: comet.address,
-  //       },
-  //     ]
-  //   });
+    //     137: [
+    //       {
+    //         baseSymbol: 'USDC',
+    //         cometAddress: comet.address,
+    //       },
+    //     ]
+    //   });
 
   //   // 8.
   //   expect(await comptrollerV2.compBorrowSpeeds(cUSDTAddress)).to.be.equal(4825000000000000n);

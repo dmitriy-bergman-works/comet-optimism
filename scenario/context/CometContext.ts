@@ -255,7 +255,7 @@ export class CometContext {
   }
 
   async sourceTokens(amount: number | bigint, asset: CometAsset | string, recipient: AddressLike) {
-    console.log('NEEDED',{ amount: amount.toString(), asset, recipient})
+    console.log('NEEDED',{ amount: amount.toString(), asset, recipient});
     const { world } = this;
     const recipientAddress = resolveAddress(recipient);
     const cometAsset = typeof asset === 'string' ? this.getAssetByAddress(asset) : asset;
@@ -288,7 +288,7 @@ export class CometContext {
         asset: cometAsset.address,
         address: recipientAddress,
         blacklist: [comet.address],
-      })
+      });
       await sourceTokens({
         dm: this.world.deploymentManager,
         amount: amountRemaining,
@@ -296,6 +296,7 @@ export class CometContext {
         address: recipientAddress,
         blacklist: [comet.address],
       });
+      console.log('DOSHOL');
     }
   }
 
