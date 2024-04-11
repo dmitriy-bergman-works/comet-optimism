@@ -90,7 +90,6 @@ export async function deployNetworkComet(
   }
 
   const ethers = deploymentManager.hre.ethers;
-
   const trace = deploymentManager.tracer();
   const admin = adminSigner ?? await deploymentManager.getSigner();
 
@@ -235,6 +234,7 @@ export async function deployNetworkComet(
   const $configuratorImpl = await cometAdmin.getProxyImplementation(configurator.address);
   const $cometImpl = await cometAdmin.getProxyImplementation(comet.address);
   const isTmpImpl = sameAddress($cometImpl, tmpCometImpl.address);
+
   // Note: these next setup steps may require a follow-up proposal to complete, if we cannot admin here
   await deploymentManager.idempotent(
     async () => amAdmin && !sameAddress($configuratorImpl, configuratorImpl.address),
@@ -259,8 +259,8 @@ export async function deployNetworkComet(
       trace(await wait(configurator.connect(admin).setConfiguration(comet.address, configuration)));
 
       trace(`Upgrading implementation of Comet...`);
-      const connectAdmin = cometAdmin.connect(admin);
-      trace(await wait(connectAdmin.deployAndUpgradeTo(configurator.address, comet.address)));
+      trace(await wait(cometAdmin.connect(admin).deployAndUpgradeTo(configurator.address, comet.address)));
+      
       trace(`New Comet implementation at ${await cometAdmin.getProxyImplementation(comet.address)}`);
     }
   );
