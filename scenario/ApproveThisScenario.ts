@@ -22,6 +22,7 @@ scenario('Comet#approveThis > allows governor to authorize and rescind authoriza
   const baseTokenAddress = await comet.baseToken();
   const baseToken = context.getAssetByAddress(baseTokenAddress);
 
+  expect(await baseToken.allowance(comet.address, timelock.address)).to.be.equal(0n);
   const newAllowance = 999_888n;
   await context.setNextBaseFeeToZero();
   await admin.approveThis(timelock.address, baseTokenAddress, newAllowance, { gasPrice: 0 });

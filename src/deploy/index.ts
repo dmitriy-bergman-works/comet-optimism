@@ -14,6 +14,7 @@ export interface ProtocolConfiguration {
   baseToken?: string;
   baseTokenPriceFeed?: string;
   extensionDelegate?: string;
+  assetContainerFactory?: string;
   supplyKink?: BigNumberish;
   supplyPerYearInterestRateBase?: BigNumberish;
   supplyPerYearInterestRateSlopeLow?: BigNumberish;

@@ -90,6 +90,7 @@ export interface NetworkConfiguration {
   baseToken: string;
   baseTokenAddress?: string;
   baseTokenPriceFeed: string;
+  assetContainerFactory?: string;
   borrowMin: ScientificNotation;
   storeFrontPriceFactor: number;
   targetReserves: ScientificNotation;

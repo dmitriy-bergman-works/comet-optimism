@@ -1120,7 +1120,7 @@ contract Comet is CometMainInterface {
     function approveThis(address manager, address asset, uint amount) override external {
         if (msg.sender != governor) revert Unauthorized();
 
-        ERC20(asset).approve(manager, amount);
+        ERC20(asset).safeApprove(manager, amount);
     }
 
     /**
@@ -1170,7 +1170,7 @@ contract Comet is CometMainInterface {
     /**
      * @notice Fallback to calling the extension delegate for everything else
      */
-    fallback() external payable {
+    fallback() external  {
         address delegate = extensionDelegate;
         assembly {
             calldatacopy(0, 0, calldatasize())

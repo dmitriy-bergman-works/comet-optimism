@@ -146,12 +146,20 @@ export async function deployNetworkComet(
     maybeForce(deploySpec.cometMain)
   );
 
+  const cometAssetContainerFactory = await deploymentManager.deploy(
+    'cometAssetContainerFactory',
+    'CometAssetContainerFactory.sol',
+    [],
+    maybeForce(deploySpec.cometMain)
+  );
+
   const configuration = {
     governor,
     pauseGuardian,
     baseToken,
     baseTokenPriceFeed,
     extensionDelegate: cometExt.address,
+    assetContainerFactory: cometAssetContainerFactory.address,
     supplyKink,
     supplyPerYearInterestRateSlopeLow,
     supplyPerYearInterestRateSlopeHigh,
@@ -213,9 +221,10 @@ export async function deployNetworkComet(
   // Note: the success of these calls is dependent on who the admin is and if/when its been transferred
   //  scenarios can pass in an impersonated signer, but real deploys may require proposals for some states
   const configurator = configuratorImpl.attach(configuratorProxy.address);
-
+  console.log('comet1', cometProxy.address);
   // Also get a handle for Comet, although it may not *actually* support the interface yet
   const comet = await deploymentManager.cast(cometProxy.address, 'contracts/CometInterface.sol:CometInterface');
+  console.log('comet2', comet.address);
 
   // Call initializeStorage if storage not initialized
   // Note: we now rely on the fact that anyone may call, which helps separate the proposal
@@ -256,8 +265,10 @@ export async function deployNetworkComet(
     async () => amAdmin && (isTmpImpl || deploySpec.all || deploySpec.cometMain || deploySpec.cometExt),
     async () => {
       trace(`Setting configuration in Configurator for ${comet.address} (${isTmpImpl})`);
+      console.log('iiii');
       trace(await wait(configurator.connect(admin).setConfiguration(comet.address, configuration)));
 
+      console.log('HEREHREHREHREHRE');
       trace(`Upgrading implementation of Comet...`);
       trace(await wait(cometAdmin.connect(admin).deployAndUpgradeTo(configurator.address, comet.address)));
 
