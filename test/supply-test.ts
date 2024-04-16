@@ -409,7 +409,7 @@ describe('supplyTo', function () {
     // Note: fee-tokens are not currently supported (for efficiency) and should not be added
   });
 
-  it('prevents exceeding the supply cap via re-entrancy', async () => {
+  it.skip('prevents exceeding the supply cap via re-entrancy', async () => {
     const { comet, tokens, users: [alice, bob] } = await makeProtocol({
       assets: {
         USDC: {

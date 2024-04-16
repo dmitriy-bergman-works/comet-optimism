@@ -4,6 +4,8 @@ pragma solidity 0.8.15;
 import "./CometMainInterface.sol";
 import "./ERC20.sol";
 import "./IPriceFeed.sol";
+import "./SafeERC20/SafeERC20.sol";
+import "./ICometAssetContainerFactory.sol";
 
 /**
  * @title Compound's Comet Contract
@@ -11,6 +13,7 @@ import "./IPriceFeed.sol";
  * @author Compound
  */
 contract Comet is CometMainInterface {
+    using SafeERC20 for ERC20;
     /** General configuration constants **/
 
     /// @notice The admin of the protocol
@@ -100,38 +103,7 @@ contract Comet is CometMainInterface {
     /// @notice Factor to divide by when accruing rewards in order to preserve 6 decimals (i.e. baseScale / 1e6)
     uint internal immutable accrualDescaleFactor;
 
-    /** Collateral asset configuration (packed) **/
-
-    uint256 internal immutable asset00_a;
-    uint256 internal immutable asset00_b;
-    uint256 internal immutable asset01_a;
-    uint256 internal immutable asset01_b;
-    uint256 internal immutable asset02_a;
-    uint256 internal immutable asset02_b;
-    uint256 internal immutable asset03_a;
-    uint256 internal immutable asset03_b;
-    uint256 internal immutable asset04_a;
-    uint256 internal immutable asset04_b;
-    uint256 internal immutable asset05_a;
-    uint256 internal immutable asset05_b;
-    uint256 internal immutable asset06_a;
-    uint256 internal immutable asset06_b;
-    uint256 internal immutable asset07_a;
-    uint256 internal immutable asset07_b;
-    uint256 internal immutable asset08_a;
-    uint256 internal immutable asset08_b;
-    uint256 internal immutable asset09_a;
-    uint256 internal immutable asset09_b;
-    uint256 internal immutable asset10_a;
-    uint256 internal immutable asset10_b;
-    uint256 internal immutable asset11_a;
-    uint256 internal immutable asset11_b;
-    uint256 internal immutable asset12_a;
-    uint256 internal immutable asset12_b;
-    uint256 internal immutable asset13_a;
-    uint256 internal immutable asset13_b;
-    uint256 internal immutable asset14_a;
-    uint256 internal immutable asset14_b;
+    address public immutable assetContainer;
 
     /**
      * @notice Construct a new protocol instance
@@ -184,21 +156,7 @@ contract Comet is CometMainInterface {
         // Set asset info
         numAssets = uint8(config.assetConfigs.length);
 
-        (asset00_a, asset00_b) = getPackedAssetInternal(config.assetConfigs, 0);
-        (asset01_a, asset01_b) = getPackedAssetInternal(config.assetConfigs, 1);
-        (asset02_a, asset02_b) = getPackedAssetInternal(config.assetConfigs, 2);
-        (asset03_a, asset03_b) = getPackedAssetInternal(config.assetConfigs, 3);
-        (asset04_a, asset04_b) = getPackedAssetInternal(config.assetConfigs, 4);
-        (asset05_a, asset05_b) = getPackedAssetInternal(config.assetConfigs, 5);
-        (asset06_a, asset06_b) = getPackedAssetInternal(config.assetConfigs, 6);
-        (asset07_a, asset07_b) = getPackedAssetInternal(config.assetConfigs, 7);
-        (asset08_a, asset08_b) = getPackedAssetInternal(config.assetConfigs, 8);
-        (asset09_a, asset09_b) = getPackedAssetInternal(config.assetConfigs, 9);
-        (asset10_a, asset10_b) = getPackedAssetInternal(config.assetConfigs, 10);
-        (asset11_a, asset11_b) = getPackedAssetInternal(config.assetConfigs, 11);
-        (asset12_a, asset12_b) = getPackedAssetInternal(config.assetConfigs, 12);
-        (asset13_a, asset13_b) = getPackedAssetInternal(config.assetConfigs, 13);
-        (asset14_a, asset14_b) = getPackedAssetInternal(config.assetConfigs, 14);
+        assetContainer = ICometAssetContainerFactory(config.assetContainerFactory).createAssetContainer(config.assetConfigs);
     }
 
     /**
@@ -219,140 +177,38 @@ contract Comet is CometMainInterface {
     }
 
     /**
-     * @dev Checks and gets the packed asset info for storage
-     */
-    function getPackedAssetInternal(AssetConfig[] memory assetConfigs, uint i) internal view returns (uint256, uint256) {
-        AssetConfig memory assetConfig;
-        if (i < assetConfigs.length) {
-            assembly {
-                assetConfig := mload(add(add(assetConfigs, 0x20), mul(i, 0x20)))
-            }
-        } else {
-            return (0, 0);
-        }
-        address asset = assetConfig.asset;
-        address priceFeed = assetConfig.priceFeed;
-        uint8 decimals_ = assetConfig.decimals;
-
-        // Short-circuit if asset is nil
-        if (asset == address(0)) {
-            return (0, 0);
-        }
-
-        // Sanity check price feed and asset decimals
-        if (IPriceFeed(priceFeed).decimals() != PRICE_FEED_DECIMALS) revert BadDecimals();
-        if (ERC20(asset).decimals() != decimals_) revert BadDecimals();
-
-        // Ensure collateral factors are within range
-        if (assetConfig.borrowCollateralFactor >= assetConfig.liquidateCollateralFactor) revert BorrowCFTooLarge();
-        if (assetConfig.liquidateCollateralFactor > MAX_COLLATERAL_FACTOR) revert LiquidateCFTooLarge();
-
-        unchecked {
-            // Keep 4 decimals for each factor
-            uint64 descale = FACTOR_SCALE / 1e4;
-            uint16 borrowCollateralFactor = uint16(assetConfig.borrowCollateralFactor / descale);
-            uint16 liquidateCollateralFactor = uint16(assetConfig.liquidateCollateralFactor / descale);
-            uint16 liquidationFactor = uint16(assetConfig.liquidationFactor / descale);
-
-            // Be nice and check descaled values are still within range
-            if (borrowCollateralFactor >= liquidateCollateralFactor) revert BorrowCFTooLarge();
-
-            // Keep whole units of asset for supply cap
-            uint64 supplyCap = uint64(assetConfig.supplyCap / (10 ** decimals_));
-
-            uint256 word_a = (uint160(asset) << 0 |
-                              uint256(borrowCollateralFactor) << 160 |
-                              uint256(liquidateCollateralFactor) << 176 |
-                              uint256(liquidationFactor) << 192);
-            uint256 word_b = (uint160(priceFeed) << 0 |
-                              uint256(decimals_) << 160 |
-                              uint256(supplyCap) << 168);
-
-            return (word_a, word_b);
-        }
-    }
-
-    /**
      * @notice Get the i-th asset info, according to the order they were passed in originally
      * @param i The index of the asset info to get
      * @return The asset info object
      */
     function getAssetInfo(uint8 i) override public view returns (AssetInfo memory) {
-        if (i >= numAssets) revert BadAsset();
+        bytes memory call = abi.encodeWithSelector(
+            this.getAssetInfo.selector,
+            i
+        );
+        bytes memory returnData = delegateViewTransaction(assetContainer, call);
+        return (abi.decode(returnData, (AssetInfo)));
+    }
 
-        uint256 word_a;
-        uint256 word_b;
-
-        if (i == 0) {
-            word_a = asset00_a;
-            word_b = asset00_b;
-        } else if (i == 1) {
-            word_a = asset01_a;
-            word_b = asset01_b;
-        } else if (i == 2) {
-            word_a = asset02_a;
-            word_b = asset02_b;
-        } else if (i == 3) {
-            word_a = asset03_a;
-            word_b = asset03_b;
-        } else if (i == 4) {
-            word_a = asset04_a;
-            word_b = asset04_b;
-        } else if (i == 5) {
-            word_a = asset05_a;
-            word_b = asset05_b;
-        } else if (i == 6) {
-            word_a = asset06_a;
-            word_b = asset06_b;
-        } else if (i == 7) {
-            word_a = asset07_a;
-            word_b = asset07_b;
-        } else if (i == 8) {
-            word_a = asset08_a;
-            word_b = asset08_b;
-        } else if (i == 9) {
-            word_a = asset09_a;
-            word_b = asset09_b;
-        } else if (i == 10) {
-            word_a = asset10_a;
-            word_b = asset10_b;
-        } else if (i == 11) {
-            word_a = asset11_a;
-            word_b = asset11_b;
-        } else if (i == 12) {
-            word_a = asset12_a;
-            word_b = asset12_b;
-        } else if (i == 13) {
-            word_a = asset13_a;
-            word_b = asset13_b;
-        } else if (i == 14) {
-            word_a = asset14_a;
-            word_b = asset14_b;
-        } else {
-            revert Absurd();
+    /**
+     * @dev Delegate a view transaction to the asset container
+     */
+    function delegateViewTransaction(address delegator, bytes memory call)
+        internal
+        view
+        returns (bytes memory)
+    {
+        /// @custom:oz-upgrades-unsafe-allow delegatecall
+        (bool success, bytes memory returnData) = delegator.staticcall(call);
+        if (success == false) {
+            assembly {
+                let ptr := mload(0x40)
+                let size := returndatasize()
+                returndatacopy(ptr, 0, size)
+                revert(ptr, size)
+            }
         }
-
-        address asset = address(uint160(word_a & type(uint160).max));
-        uint64 rescale = FACTOR_SCALE / 1e4;
-        uint64 borrowCollateralFactor = uint64(((word_a >> 160) & type(uint16).max) * rescale);
-        uint64 liquidateCollateralFactor = uint64(((word_a >> 176) & type(uint16).max) * rescale);
-        uint64 liquidationFactor = uint64(((word_a >> 192) & type(uint16).max) * rescale);
-
-        address priceFeed = address(uint160(word_b & type(uint160).max));
-        uint8 decimals_ = uint8(((word_b >> 160) & type(uint8).max));
-        uint64 scale = uint64(10 ** decimals_);
-        uint128 supplyCap = uint128(((word_b >> 168) & type(uint64).max) * scale);
-
-        return AssetInfo({
-            offset: i,
-            asset: asset,
-            priceFeed: priceFeed,
-            scale: scale,
-            borrowCollateralFactor: borrowCollateralFactor,
-            liquidateCollateralFactor: liquidateCollateralFactor,
-            liquidationFactor: liquidationFactor,
-            supplyCap: supplyCap
-         });
+        return returnData;
     }
 
     /**
@@ -760,19 +616,21 @@ contract Comet is CometMainInterface {
     }
 
     /**
-     * @dev Safe ERC20 transfer in, assumes no fee is charged and amount is transferred
+     * @dev Safe ERC20 transfer in and returns the final amount transferred (taking into account any fees)
+     * @dev Note: Safely handles non-standard ERC-20 tokens that do not return a value. See here: https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
      */
-    function doTransferIn(address asset, address from, uint amount) internal {
-        bool success = ERC20(asset).transferFrom(from, address(this), amount);
-        if (!success) revert TransferInFailed();
+    function doTransferIn(address asset, address from, uint amount) internal returns (uint) {
+        uint256 preTransferBalance = ERC20(asset).balanceOf(address(this));
+        ERC20(asset).safeTransferFrom(from, address(this), amount);
+        return ERC20(asset).balanceOf(address(this)) - preTransferBalance;
     }
 
     /**
      * @dev Safe ERC20 transfer out
+     * @dev Note: Safely handles non-standard ERC-20 tokens that do not return a value. See here: https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
      */
     function doTransferOut(address asset, address to, uint amount) internal {
-        bool success = ERC20(asset).transfer(to, amount);
-        if (!success) revert TransferOutFailed();
+        ERC20(asset).safeTransfer(to, amount);
     }
 
     /**
@@ -827,7 +685,7 @@ contract Comet is CometMainInterface {
      * @dev Supply an amount of base asset from `from` to dst
      */
     function supplyBase(address from, address dst, uint256 amount) internal {
-        doTransferIn(baseToken, from, amount);
+        amount = doTransferIn(baseToken, from, amount);
 
         accrueInternal();
 
@@ -854,7 +712,7 @@ contract Comet is CometMainInterface {
      * @dev Supply an amount of collateral asset from `from` to dst
      */
     function supplyCollateral(address from, address dst, address asset, uint128 amount) internal {
-        doTransferIn(asset, from, amount);
+        amount = safe128(doTransferIn(asset, from, amount));
 
         AssetInfo memory assetInfo = getAssetInfoByAddress(asset);
         TotalsCollateral memory totals = totalsCollateral[asset];
@@ -1199,7 +1057,7 @@ contract Comet is CometMainInterface {
         if (reserves >= 0 && uint(reserves) >= targetReserves) revert NotForSale();
 
         // Note: Re-entrancy can skip the reserves check above on a second buyCollateral call.
-        doTransferIn(baseToken, msg.sender, baseAmount);
+        baseAmount = doTransferIn(baseToken, msg.sender, baseAmount);
 
         uint collateralAmount = quoteCollateral(asset, baseAmount);
         if (collateralAmount < minAmount) revert TooMuchSlippage();
@@ -1254,6 +1112,7 @@ contract Comet is CometMainInterface {
      * @dev Only callable by governor
      * @dev Note: Setting the `asset` as Comet's address will allow the manager
      * to withdraw from Comet's Comet balance
+     * @dev Note: For USDT, if there is non-zero prior allowance, it must be reset to 0 first before setting a new value in proposal
      * @param asset The asset that the manager will gain approval of
      * @param manager The account which will be allowed or disallowed
      * @param amount The amount of an asset to approve

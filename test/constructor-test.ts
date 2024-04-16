@@ -4,6 +4,7 @@ import {
   CometHarness__factory,
   FaucetToken__factory,
   SimplePriceFeed__factory,
+  CometAssetContainerFactory__factory
 } from '../build/types';
 
 describe('constructor', function () {
@@ -50,6 +51,8 @@ describe('constructor', function () {
       await priceFeed.deployed();
       priceFeeds[asset] = priceFeed;
     }
+    const CometAssetContainerFactory = (await ethers.getContractFactory('CometAssetContainerFactory')) as CometAssetContainerFactory__factory; 
+    const assetContainerFactory = await CometAssetContainerFactory.deploy();
 
     const CometFactory = (await ethers.getContractFactory('CometHarness')) as CometHarness__factory;
     await expect(CometFactory.deploy({
@@ -57,6 +60,7 @@ describe('constructor', function () {
       pauseGuardian: pauseGuardian.address,
       extensionDelegate: extensionDelegate.address,
       baseToken: tokens['USDC'].address,
+      assetContainerFactory: assetContainerFactory.address,
       baseTokenPriceFeed: priceFeeds['USDC'].address,
       supplyKink: exp(8, 17),
       supplyPerYearInterestRateBase: exp(5, 15),

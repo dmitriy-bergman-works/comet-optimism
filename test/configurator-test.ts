@@ -33,6 +33,7 @@ function convertToEventConfiguration(configuration: ConfigurationStructOutput) {
     configuration.baseToken,
     configuration.baseTokenPriceFeed,
     configuration.extensionDelegate,
+    configuration.assetContainerFactory,
     configuration.supplyKink.toBigInt(),
     configuration.supplyPerYearInterestRateSlopeLow.toBigInt(),
     configuration.supplyPerYearInterestRateSlopeHigh.toBigInt(),
@@ -74,7 +75,7 @@ describe('configurator', function () {
     const txn = await wait(configuratorAsProxy.deploy(cometProxy.address)) as any;
     const [, newCometAddress] = txn.receipt.events.find(event => event.event === 'CometDeployed').args;
 
-    expect(event(txn, 0)).to.be.deep.equal({
+    expect(event(txn, 1)).to.be.deep.equal({
       CometDeployed: {
         cometProxy: cometProxy.address,
         newComet: newCometAddress,

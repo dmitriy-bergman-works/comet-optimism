@@ -5,7 +5,8 @@ import {
   CometExt__factory,
   CometHarness__factory,
   CometHarnessInterface,
-  OnChainLiquidator__factory
+  OnChainLiquidator__factory,
+  CometAssetContainerFactory__factory
 } from '../../build/types';
 import {
   BALANCER_VAULT,
@@ -58,12 +59,17 @@ export async function makeProtocol() {
   const extensionDelegate = await CometExtFactory.deploy({ name32, symbol32 });
   await extensionDelegate.deployed();
 
+  const CometAssetContainerFactory = await ethers.getContractFactory('CometAssetContainerFactory') as CometAssetContainerFactory__factory;
+  const cometAssetContainerFactory = await CometAssetContainerFactory.deploy();
+  await cometAssetContainerFactory.deployed();
+
   const CometFactory = (await ethers.getContractFactory('CometHarness')) as CometHarness__factory;
   const config = {
     governor: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     pauseGuardian: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     extensionDelegate: extensionDelegate.address,
     baseToken: USDC,
+    assetContainerFactory: cometAssetContainerFactory.address,
     baseTokenPriceFeed: USDC_USD_PRICE_FEED,
     supplyKink: exp(0.8, 18),
     supplyPerYearInterestRateBase: 0n,

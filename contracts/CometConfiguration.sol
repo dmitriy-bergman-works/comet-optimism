@@ -17,6 +17,7 @@ contract CometConfiguration {
         address baseToken;
         address baseTokenPriceFeed;
         address extensionDelegate;
+        address assetContainerFactory;
 
         uint64 supplyKink;
         uint64 supplyPerYearInterestRateSlopeLow;
