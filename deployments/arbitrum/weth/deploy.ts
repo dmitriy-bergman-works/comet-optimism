@@ -5,6 +5,7 @@ export default async function deploy(deploymentManager: DeploymentManager, deplo
   const WETH = await deploymentManager.existing('WETH', '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', 'arbitrum');
   const rETH = await deploymentManager.existing('rETH', '0xEC70Dcb4A1EFa46b8F2D97C310C9c4790ba5ffA8', 'arbitrum');
   const wstETH = await deploymentManager.existing('wstETH', '0x5979D7b546E38E414F7E9822514be443A4800529', 'arbitrum');
+  const COMP = await deploymentManager.existing('COMP', '0x354A6dA3fcde098F8389cad84b0182725c6C91dE', 'arbitrum');
 
   // Deploy WstETHPriceFeed
   const wstETHPriceFeed = await deploymentManager.deploy(
@@ -47,14 +48,14 @@ export default async function deploy(deploymentManager: DeploymentManager, deplo
   const bridgeReceiver = await deploymentManager.fromDep('bridgeReceiver', 'arbitrum', 'usdc.e');
 
 
-  // Deploy all Comet-related contracts
+  // Deploy Comet
   const deployed = await deployComet(deploymentManager, deploySpec);
-  const { comet } = deployed;
 
   return {
     ...deployed,
     bridgeReceiver, 
     bulker,
-    rewards
+    rewards,
+    COMP
   };
 }

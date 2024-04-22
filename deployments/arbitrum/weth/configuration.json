@@ -6,6 +6,7 @@
     "borrowMin": "0.1e18",
     "governor": "0x3fB4d38ea7EC20D91917c09591490Eeda38Cf88A",
     "pauseGuardian": "0x78E6317DD6D43DdbDa00Dce32C2CbaFc99361a9d",
+    "rewardTokenAddress": "0x354A6dA3fcde098F8389cad84b0182725c6C91dE",
     "storeFrontPriceFactor": 0.5,
     "targetReserves": "5000e18",
     "rates": {
