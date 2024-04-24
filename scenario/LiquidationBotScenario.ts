@@ -155,6 +155,12 @@ for (let i = 0; i < MAX_ASSETS; i++) {
         ' == 500',
         // WBTC
         ' == 50'
+      ],
+      weth: [
+        // rETH
+        ' == 500',
+        // wstETH
+        ' == 500'
       ]
     }
   };
@@ -340,6 +346,12 @@ for (let i = 0; i < MAX_ASSETS; i++) {
         ' == 5000',
         // WBTC
         ' == 300'
+      ],
+      weth: [
+        // rETH
+        ' == 500',
+        // wstETH
+        ' == 500'
       ]
     }
   };
@@ -396,6 +408,12 @@ for (let i = 0; i < MAX_ASSETS; i++) {
         exp(500, 18),
         // WBTC
         exp(50, 8),
+      ],
+      weth: [
+        // rETH
+        exp(500, 18),
+        // wstETH
+        exp(500, 18)
       ]
     }
   };

@@ -153,8 +153,8 @@ scenario(
   {
     filter: async (ctx) => await isRewardSupported(ctx),
     tokenBalances: {
-      albert: { $asset0: ' == 10000' }, // in units of asset, not wei
-      $comet: { $base: ' >= 1000 ' }
+      albert: { $asset0: ' == 1000' }, // in units of asset, not wei
+      $comet: { $base: ' >= 100 ' }
     },
   },
   async ({ comet, rewards, actors }, context, world) => {
@@ -162,10 +162,10 @@ scenario(
     const { asset: collateralAssetAddress, scale: scaleBN } = await comet.getAssetInfo(0);
     const collateralAsset = context.getAssetByAddress(collateralAssetAddress);
     const scale = scaleBN.toBigInt();
-    const toSupply = 10_000n * scale;
+    const toSupply = 1000n * scale;
     const baseAssetAddress = await comet.baseToken();
     const baseScale = (await comet.baseScale()).toBigInt();
-    const toBorrow = 1_000n * baseScale;
+    const toBorrow = 100n * baseScale;
 
     const { rescaleFactor } = await context.getRewardConfig();
     const rewardToken = await context.getRewardToken();
@@ -260,7 +260,7 @@ async function testScalingReward(properties: CometProperties, context: CometCont
     [albert.address]
   );
   await newRewards.connect(albert.signer).setRewardConfigWithMultiplier(comet.address, rewardTokenAddress, multiplier);
-  await context.sourceTokens(exp(1_000, rewardDecimals), rewardTokenAddress, newRewards.address);
+  await context.sourceTokens(exp(500, rewardDecimals), rewardTokenAddress, newRewards.address);
 
   await baseAsset.approve(albert, comet.address);
   await albert.safeSupplyAsset({ asset: baseAssetAddress, amount: 100n * baseScale });
